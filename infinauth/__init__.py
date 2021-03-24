@@ -33,8 +33,6 @@ class InfinAuth(oauthenticator.generic.GenericOAuthenticator):
         )
     )
 
-    spawner = None
-
     def _create_auth_state(self, token_response, user_data_response):
         self.log.info("InfinAuth._create_auth_state: Entered")
         access_token = token_response['access_token']
@@ -118,6 +116,8 @@ class InfinAuth(oauthenticator.generic.GenericOAuthenticator):
             auth_state['access_token'] = access_token
             auth_state['id_token'] = id_token
             auth_state['token_time_epoch_seconds'] = str(token_time)
-            if (self.spawner):
+            try:
                 self.spawner.set_auth_state(self.client_id, auth_state['access_token'], auth_state['id_token'], auth_state['refresh_token'])
+            except AttributeError:
+                self.log.info('InfinAuth.renew_token: WARNING could not set auth state in spawner ')
             return { 'auth_state': auth_state }
