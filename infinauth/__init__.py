@@ -36,7 +36,7 @@ class InfinAuth(oauthenticator.generic.GenericOAuthenticator):
     def _create_auth_state(self, token_response, user_data_response):
         self.log.info("InfinAuth._create_auth_state: Entered")
         access_token = token_response['access_token']
-        id_token = token_response['id_token']
+        self.id_token = token_response['id_token']
         refresh_token = token_response.get('refresh_token', None)
         scope = token_response.get('scope', '')
         if isinstance(scope, str):
@@ -44,12 +44,14 @@ class InfinAuth(oauthenticator.generic.GenericOAuthenticator):
 
         return {
             'access_token': access_token,
-            'id_token': id_token,
+            'id_token': self.id_token,
             'refresh_token': refresh_token,
             'oauth_user': user_data_response,
             'scope': scope,
             'token_time_epoch_seconds': str(int(time.time())),
         }
+    def get_id_token(self):
+        return self.id_token
 
     async def pre_spawn_start(self, user, spawner):
         self.log.info("InfinAuth.pre_spawn_start: user=" + str(user) + ", spawner=" + str(spawner))
@@ -60,8 +62,7 @@ class InfinAuth(oauthenticator.generic.GenericOAuthenticator):
             return
         else:
             self.spawner = spawner
-            spawner.set_auth_state(self.client_id, auth_state['access_token'],
-                    auth_state['id_token'], auth_state['refresh_token'])
+            spawner.set_auth(self)
 
     async def refresh_user(self, user, handler=None):
         self.log.info("InfinAuth.refresh_user: Entered")
@@ -109,12 +110,12 @@ class InfinAuth(oauthenticator.generic.GenericOAuthenticator):
         else:
             authres = response.json()['AuthenticationResult']
             self.log.info('InfinAuth.renew_token: authres=' + str(authres))
-            id_token = authres['IdToken']
+            self.id_token = authres['IdToken']
             access_token = authres['AccessToken']
             token_time = int(time.time())
             # modify incoming auth_state and return it
             auth_state['access_token'] = access_token
-            auth_state['id_token'] = id_token
+            auth_state['id_token'] = self.id_token
             auth_state['token_time_epoch_seconds'] = str(token_time)
             try:
                 self.spawner.set_auth_state(self.client_id, auth_state['access_token'], auth_state['id_token'], auth_state['refresh_token'])
