@@ -117,8 +117,5 @@ class InfinAuth(oauthenticator.generic.GenericOAuthenticator):
             auth_state['access_token'] = access_token
             auth_state['id_token'] = self.id_token
             auth_state['token_time_epoch_seconds'] = str(token_time)
-            try:
-                self.spawner.set_auth_state(self.client_id, auth_state['access_token'], auth_state['id_token'], auth_state['refresh_token'])
-            except AttributeError:
-                self.log.info('InfinAuth.renew_token: WARNING could not set auth state in spawner ')
+            #self.spawner.set_auth(self)
             return { 'auth_state': auth_state }
